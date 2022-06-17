@@ -9,7 +9,7 @@ class Exam(models.Model):
     description = models.TextField(blank=True)
     created_on = models.DateTimeField(default=timezone.now)
     start_on = models.DateTimeField()
-    end_on = models.DateTimeField(blank=True) #doubt..maybe
+    is_completed = models.BooleanField(default=False)
     students = models.ManyToManyField(User, related_name="exams")
 
     def __str__(self):

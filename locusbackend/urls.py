@@ -37,6 +37,7 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('api-auth/', include('rest_framework.urls')),
     path('docs/', include_docs_urls(title='LOCUS Backend'), name="Documentation"),
+    path('exam/', include('exam.urls'), name="Exams"),
     path('users/', include('users.urls'), name="Users"),
     path('', schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),
     path("redoc/", schema_view.with_ui('redoc', cache_timeout=0), name='schema-redoc'),

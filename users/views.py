@@ -1,8 +1,10 @@
 from rest_framework import status
-from rest_framework.decorators import api_view
 from rest_framework.views import APIView
 from rest_framework import generics
 from rest_framework.response import Response
+from rest_framework.authtoken.views import ObtainAuthToken
+from rest_framework.authtoken.models import Token
+
 from drf_yasg.utils import swagger_auto_schema
 
 from .serializers import StudentRegisterSerializer, StudentLoginSerializer
@@ -34,11 +36,22 @@ class StudentRegister(generics.GenericAPIView):
         else:
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-# TODO
-class StudentLogin(APIView):
-    serializer_class = StudentLoginSerializer
 
-    def post(self, request):
-        return None
+class StudentAuthToken(ObtainAuthToken):
+
+    def post(self, request, *args, **kwargs):
+        serializer = self.serializer_class(data=request.data,
+                                           context={'request': request})
+        serializer.is_valid(raise_exception=True)
+        user = serializer.validated_data['user']
+        if user.is_approved:
+            token, created = Token.objects.get_or_create(user=user)
+            return Response({
+                'token': token.key,
+                'user_id': user.pk
+            }, status=status.HTTP_200_OK)
+        else:
+            return Response({"Error": "Unauthorized", "Message": "The account has not been apporved yet!"}, 
+            status=status.HTTP_401_UNAUTHORIZED)
 
 
