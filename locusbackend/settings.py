@@ -12,7 +12,7 @@ https://docs.djangoproject.com/en/4.0/ref/settings/
 
 import os
 from pathlib import Path
-
+from decouple import config
 
 #from users.models import User
 
@@ -27,9 +27,9 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = 'django-insecure-8#@9b+scur8l61=)7-i3jdyajua+z76@_+6n(!0#ka=&s*x&ya'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = config('DEBUG', default=False, cast=bool)
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['https://locusback.herokuapp.com/', 'localhost', '127.0.0.1']
 
 
 # Application definition
