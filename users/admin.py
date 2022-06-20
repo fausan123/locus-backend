@@ -17,6 +17,4 @@ class UserAdmin(UserAdmin):
     list_display = ("first_name", "last_name", "email", "date_joined")
     list_filter = ("date_joined", )
     search_fields = ("first_name__startswith", )
-
-    class Meta:
-        ordering = ("date_joined")
+    ordering = ("-date_joined", )

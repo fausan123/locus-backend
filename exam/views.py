@@ -26,26 +26,29 @@ class ActiveExams(generics.GenericAPIView):
                                 400: 'Given data is invalid'})
     
     def get(self, request):
-        submitted_exams = request.user.submissions.values_list('id', flat=True)
-        #print(submitted_exams)
-        exams = Exam.objects.exclude(id__in = submitted_exams, is_completed=True)
 
-        exam_dicts = []
-        for exam in exams:
-            subjects = exam.subjects.all()
-            subs = []
-            for sub in subjects:
-                ques = sub.questions.all()
-                ques = [que.__dict__ for que in ques]
-                subs.append({'name': sub.name, 'questions': ques})
-            e_dict = exam.__dict__
-            e_dict['subjects'] = subs
-            exam_dicts.append(e_dict)    
+        try:
+            submitted_exams = list(request.user.submissions.values('exam').values_list('id', flat=True))
+            exams = Exam.objects.exclude(is_completed=True).exclude(id__in = submitted_exams)
 
-        #print(exams)
-        exam_ser = self.serializer_class(data=exam_dicts, many=True)
-        exam_ser.is_valid(raise_exception=True)
-        return Response(exam_ser.data, status=status.HTTP_200_OK)
+            exam_dicts = []
+            for exam in exams:
+                subjects = exam.subjects.all()
+                subs = []
+                for sub in subjects:
+                    ques = sub.questions.all()
+                    ques = [que.__dict__ for que in ques]
+                    subs.append({'id': sub.pk, 'name': sub.name, 'questions': ques})
+                e_dict = exam.__dict__
+                e_dict['subjects'] = subs
+                exam_dicts.append(e_dict)    
+
+            exam_ser = self.serializer_class(data=exam_dicts, many=True)
+            exam_ser.is_valid(raise_exception=True)
+            return Response(exam_ser.data, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response({"Error": type(e).__name__, "Message": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+        
 
 class SubmittedExams(generics.GenericAPIView):
     serializer_class = CompletedExamViewSerializer
@@ -57,34 +60,38 @@ class SubmittedExams(generics.GenericAPIView):
                                 400: 'Given data is invalid'})
 
     def get(self, request):
-        submissions = request.user.submissions.all()
 
-        exam_dicts = []
-        for su in submissions:
-            subjects = su.exam.subjects.all()
-            subs = []
-            score = 0
-            for sub in subjects:
-                ques = sub.questions.all()
-                que_dicts = []
-                for q in ques:
-                    qa = q.submissions.get(exam__student=request.user)
-                    q_dict = q.__dict__
-                    q_dict['answer'] = qa.answer
-                    que_dicts.append(q_dict)
-                    if qa.answer == q.correct_answer:
-                        score += 1
-                subs.append({'name': sub.name, 'questions': que_dicts})
-            e_dict = su.exam.__dict__
-            e_dict['subjects'] = subs
-            e_dict['score'] = score
-            e_dict['submitted_on'] = su.submitted_on
-            exam_dicts.append(e_dict)    
+        try:
+            submissions = request.user.submissions.all()
 
-        #print(exams)
-        exam_ser = self.serializer_class(data=exam_dicts, many=True)
-        exam_ser.is_valid(raise_exception=True)
-        return Response(exam_ser.data, status=status.HTTP_200_OK)
+            exam_dicts = []
+            for su in submissions:
+                subjects = su.exam.subjects.all()
+                subs = []
+                score = 0
+                for sub in subjects:
+                    ques = sub.questions.all()
+                    que_dicts = []
+                    for q in ques:
+                        qa = q.submissions.get(exam__student=request.user)
+                        q_dict = q.__dict__
+                        q_dict['answer'] = qa.answer
+                        que_dicts.append(q_dict)
+                        if qa.answer == q.correct_answer:
+                            score += 1
+                    subs.append({'id': sub.pk, 'name': sub.name, 'questions': que_dicts})
+                e_dict = su.exam.__dict__
+                e_dict['subjects'] = subs
+                e_dict['score'] = score
+                e_dict['submitted_on'] = su.submitted_on
+                exam_dicts.append(e_dict)    
+
+            #print(exams)
+            exam_ser = self.serializer_class(data=exam_dicts, many=True)
+            exam_ser.is_valid(raise_exception=True)
+            return Response(exam_ser.data, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response({"Error": type(e).__name__, "Message": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
     
 
