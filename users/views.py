@@ -4,10 +4,12 @@ from rest_framework import generics
 from rest_framework.response import Response
 from rest_framework.authtoken.views import ObtainAuthToken
 from rest_framework.authtoken.models import Token
+from rest_framework.authentication import TokenAuthentication
+from rest_framework.permissions import IsAuthenticated
 
 from drf_yasg.utils import swagger_auto_schema
 
-from .serializers import StudentRegisterSerializer, StudentLoginSerializer
+from .serializers import StudentRegisterSerializer, StudentLoginSerializer, StudentViewSerializer
 from .models import User
 
 # Create your views here.
@@ -54,4 +56,22 @@ class StudentAuthToken(ObtainAuthToken):
             return Response({"Error": "Unauthorized", "Message": "The account has not been apporved yet!"}, 
             status=status.HTTP_401_UNAUTHORIZED)
 
+class StudentView(generics.GenericAPIView):
+    serializer_class = StudentViewSerializer
+    authentication_classes = [TokenAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    @swagger_auto_schema(operation_description="Student Details View",
+                         responses={ 200: 'Data Successfully Fetched',
+                                400: 'Given token is invalid'})
+
+    def get(self, request):
+
+        try:
+            user_serializer = self.serializer_class(data=request.user.__dict__)
+            user_serializer.is_valid(raise_exception=True)
+
+            return Response(user_serializer.data, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response({"Error": type(e).__name__, "Message": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
