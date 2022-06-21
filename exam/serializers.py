@@ -74,3 +74,12 @@ class CompletedExamViewSerializer(serializers.ModelSerializer):
         model = Exam
         fields = ['id', 'name', 'description', 'start_on', 'subjects', 'score', 'submitted_on']
 
+##########################################################################################################
+
+class SubmitExamSerializer(serializers.Serializer):
+    id = serializers.IntegerField()
+    answer = serializers.ChoiceField(choices=[('A', 'A'), ('B', 'B'), ('C', 'C'), ('D', 'D')], allow_blank=True)
+
+
+
+

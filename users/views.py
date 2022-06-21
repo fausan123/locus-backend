@@ -32,7 +32,7 @@ class StudentRegister(generics.GenericAPIView):
                 student = User(**user_data)
                 student.set_password(user_data['password'])
                 student.save()
-                return Response({'SUCCESS': "Student Created Successfully"}, status=status.HTTP_201_CREATED)
+                return Response({'Success': "Student Created Successfully"}, status=status.HTTP_201_CREATED)
             except Exception as e:
                 return Response({ "Error": type(e).__name__ , "Message": str(e)}, status=status.HTTP_409_CONFLICT)
         else:

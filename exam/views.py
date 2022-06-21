@@ -1,3 +1,4 @@
+from genericpath import exists
 from rest_framework import status, generics
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -11,8 +12,8 @@ from rest_framework_swagger.renderers import SwaggerUIRenderer, OpenAPIRenderer
 from drf_yasg.utils import swagger_auto_schema
 
 from users.models import User
-from .models import Exam, Subject, Question, ExamSubmission
-from .serializers import ExamCreateSerializer, ActiveExamViewSerializer, CompletedExamViewSerializer
+from .models import Exam, QuestionAnswer, Subject, Question, ExamSubmission
+from .serializers import ActiveExamViewSerializer, CompletedExamViewSerializer, SubmitExamSerializer
 
 import json
 
@@ -28,7 +29,7 @@ class ActiveExams(generics.GenericAPIView):
     def get(self, request):
 
         try:
-            submitted_exams = list(request.user.submissions.values('exam').values_list('id', flat=True))
+            submitted_exams = request.user.submissions.values('exam')
             exams = Exam.objects.exclude(is_completed=True).exclude(id__in = submitted_exams)
 
             exam_dicts = []
@@ -94,6 +95,48 @@ class SubmittedExams(generics.GenericAPIView):
             return Response({"Error": type(e).__name__, "Message": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
     
+class SubmitExam(generics.GenericAPIView):
+    serializer_class = SubmitExamSerializer
+    authentication_classes = [TokenAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    @swagger_auto_schema(operation_description="Submit Exam",
+                         responses={ 201: 'Exam Successfully Submitted',
+                                409: 'Given data conflict with existing ones',
+                                400: 'Given data is invalid'})
+    
+    def post(self, request, id):
+
+        serializer = self.serializer_class(data=request.data, many=True)
+        
+        if serializer.is_valid():
+            exam_data = serializer.data
+            if (not Exam.objects.filter(pk=id).exists()):
+                return Response({ "Error": "Invalid ID" , "Message": "The given exam does not exist!"}, status=status.HTTP_409_CONFLICT)
+            if (ExamSubmission.objects.filter(exam=id, student=request.user).exists()):
+                return Response({ "Error": "Existing Submission" , "Message": "You have already submitted the exam!"}, status=status.HTTP_409_CONFLICT)
+
+            try:
+                exam = Exam.objects.get(pk=id)
+                examsubmit = ExamSubmission(student=request.user, exam=exam)
+                examsubmit.save()
+
+                for ques in exam_data:
+                    if (not Question.objects.filter(pk=ques['id']).exists()):
+                        ques_subs = QuestionAnswer.objects.filter(exam=examsubmit)
+                        ques_subs.delete()
+                        examsubmit.delete()
+                        return Response({ "Error": "Invalid ID" , "Message": f"The given question with id {ques['id']} does not exist!"}, status=status.HTTP_409_CONFLICT)
+                    
+                    question = Question.objects.get(pk=ques['id'])
+                    quessubmit = QuestionAnswer(exam=examsubmit, question=question, answer=ques['answer'])
+                    quessubmit.save()
+
+                return Response({'Success': "Exam Submitted Successfully"}, status=status.HTTP_201_CREATED)
+            except Exception as e:
+                return Response({ "Error": type(e).__name__ , "Message": str(e)}, status=status.HTTP_409_CONFLICT)
+        else:
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 
