@@ -9,8 +9,8 @@ class Exam(models.Model):
     description = models.TextField(blank=True)
     created_on = models.DateTimeField(default=timezone.now)
     start_on = models.DateTimeField()
+    is_open = models.BooleanField(default=False)
     is_completed = models.BooleanField(default=False)
-    students = models.ManyToManyField(User, related_name="exams")
 
     def __str__(self):
         return f"{self.name}"
@@ -23,14 +23,18 @@ class Subject(models.Model):
         return f"{self.exam} - {self.name}"
 
 class Question(models.Model):
+    question_no = models.IntegerField()
     title = models.TextField()
-    option_a = models.CharField(max_length=50)
-    option_b = models.CharField(max_length=50)
-    option_c = models.CharField(max_length=50)
-    option_d = models.CharField(max_length=50)
+    option_a = models.CharField(max_length=100)
+    option_b = models.CharField(max_length=100)
+    option_c = models.CharField(max_length=100)
+    option_d = models.CharField(max_length=100)
     correct_answer = models.CharField(max_length=2, choices=[('A', 'A'), ('B', 'B'), ('C', 'C'), ('D', 'D')])
     exam = models.ForeignKey(Exam, related_name="questions", on_delete=models.CASCADE)
-    subject = models.ForeignKey(Subject, related_name="questions", on_delete=models.CASCADE)  # required cascade?
+    subject = models.ForeignKey(Subject, related_name="questions", on_delete=models.CASCADE) 
+
+    class Meta:
+        unique_together = ('question_no', 'subject', )
 
     def __str__(self):
         return f"{self.title}"

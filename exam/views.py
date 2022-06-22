@@ -13,12 +13,12 @@ from drf_yasg.utils import swagger_auto_schema
 
 from users.models import User
 from .models import Exam, QuestionAnswer, Subject, Question, ExamSubmission
-from .serializers import ActiveExamViewSerializer, CompletedExamViewSerializer, SubmitExamSerializer
+from .serializers import ActiveExamsViewSerializer, ActiveExamViewSerializer, CompletedExamViewSerializer, SubmitExamSerializer
 
 import json
 
 class ActiveExams(generics.GenericAPIView):
-    serializer_class = ActiveExamViewSerializer
+    serializer_class = ActiveExamsViewSerializer
     authentication_classes = [TokenAuthentication]
     permission_classes = [IsAuthenticated]
 
@@ -32,19 +32,52 @@ class ActiveExams(generics.GenericAPIView):
             submitted_exams = request.user.submissions.values('exam')
             exams = Exam.objects.exclude(is_completed=True).exclude(id__in = submitted_exams)
 
-            exam_dicts = []
-            for exam in exams:
-                subjects = exam.subjects.all()
-                subs = []
-                for sub in subjects:
-                    ques = sub.questions.all()
-                    ques = [que.__dict__ for que in ques]
-                    subs.append({'id': sub.pk, 'name': sub.name, 'questions': ques})
-                e_dict = exam.__dict__
-                e_dict['subjects'] = subs
-                exam_dicts.append(e_dict)    
+            exam_dicts = [e.__dict__ for e in exams]   
 
             exam_ser = self.serializer_class(data=exam_dicts, many=True)
+            exam_ser.is_valid(raise_exception=True)
+            return Response(exam_ser.data, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response({"Error": type(e).__name__, "Message": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+class ActiveExamsId(generics.GenericAPIView):
+    serializer_class = ActiveExamViewSerializer
+    authentication_classes = [TokenAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    @swagger_auto_schema(operation_description="Active Exams View by ID",
+                         responses={ 200: 'Data Successfully Fetched',
+                                400: 'Given data is invalid'})
+    
+    def get(self, request, id):
+
+        try:
+            if (not Exam.objects.filter(pk=id).exists()):
+                return Response({ "Error": "Invalid ID" , "Message": "The given exam does not exist!"}, status=status.HTTP_400_BAD_REQUEST)
+            
+            exam = Exam.objects.get(pk=id)
+
+            if (ExamSubmission.objects.filter(exam=exam, student=request.user).exists()):
+                return Response({ "Error": "Exam Submitted" , "Message": "You have already submitted the exam!"}, status=status.HTTP_409_CONFLICT)
+
+            if (exam.is_completed):
+                return Response({ "Error": "Exam Completed" , "Message": "The exam has been closed!"}, status=status.HTTP_401_UNAUTHORIZED)
+            
+            if (not exam.is_open):
+                return Response({ "Error": "Exam Not Started" , "Message": "The exam has not started yet!"}, status=status.HTTP_401_UNAUTHORIZED)
+
+            
+            subjects = exam.subjects.all()
+            subs = []
+            for sub in subjects:
+                ques = sub.questions.all()
+                ques = [que.__dict__ for que in ques]
+                ques = sorted(ques, key=lambda d: d['question_no'])
+                subs.append({'id': sub.pk, 'name': sub.name, 'questions': ques})
+            e_dict = exam.__dict__
+            e_dict['subjects'] = subs   
+
+            exam_ser = self.serializer_class(data=e_dict)
             exam_ser.is_valid(raise_exception=True)
             return Response(exam_ser.data, status=status.HTTP_200_OK)
         except Exception as e:
@@ -80,6 +113,7 @@ class SubmittedExams(generics.GenericAPIView):
                         que_dicts.append(q_dict)
                         if qa.answer == q.correct_answer:
                             score += 1
+                    que_dicts = sorted(que_dicts, key=lambda d: d['question_no'])
                     subs.append({'id': sub.pk, 'name': sub.name, 'questions': que_dicts})
                 e_dict = su.exam.__dict__
                 e_dict['subjects'] = subs
@@ -112,7 +146,7 @@ class SubmitExam(generics.GenericAPIView):
         if serializer.is_valid():
             exam_data = serializer.data
             if (not Exam.objects.filter(pk=id).exists()):
-                return Response({ "Error": "Invalid ID" , "Message": "The given exam does not exist!"}, status=status.HTTP_409_CONFLICT)
+                return Response({ "Error": "Invalid ID" , "Message": "The given exam does not exist!"}, status=status.HTTP_400_BAD_REQUEST)
             if (ExamSubmission.objects.filter(exam=id, student=request.user).exists()):
                 return Response({ "Error": "Existing Submission" , "Message": "You have already submitted the exam!"}, status=status.HTTP_409_CONFLICT)
 
@@ -126,7 +160,7 @@ class SubmitExam(generics.GenericAPIView):
                         ques_subs = QuestionAnswer.objects.filter(exam=examsubmit)
                         ques_subs.delete()
                         examsubmit.delete()
-                        return Response({ "Error": "Invalid ID" , "Message": f"The given question with id {ques['id']} does not exist!"}, status=status.HTTP_409_CONFLICT)
+                        return Response({ "Error": "Invalid ID" , "Message": f"The given question with id {ques['id']} does not exist!"}, status=status.HTTP_400_BAD_REQUEST)
                     
                     question = Question.objects.get(pk=ques['id'])
                     quessubmit = QuestionAnswer(exam=examsubmit, question=question, answer=ques['answer'])

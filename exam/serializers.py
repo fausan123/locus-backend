@@ -2,33 +2,13 @@ from rest_framework import serializers
 from .models import *
 
 
-class SubjectCreateSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Subject
-        fields = ['name']
-
-class QuestionCreateSerializer(serializers.ModelSerializer):
-    subject = serializers.CharField()
-    
-    class Meta:
-        model = Question
-        fields = ['title', 'option_a', 'option_b', 'option_c', 'option_d', 'correct_answer']
-
-class ExamCreateSerializer(serializers.ModelSerializer):
-    subjects = SubjectCreateSerializer(many=True)
-    questions = QuestionCreateSerializer(many=True)
-
-    class Meta:
-        model = Exam
-        fields = ['name', 'description', 'start_on']
-
 ##########################################################################
 class ActiveQuestionViewSerializer(serializers.ModelSerializer):
     id = serializers.IntegerField()
 
     class Meta:
         model = Question
-        fields = ['id', 'title', 'option_a', 'option_b', 'option_c', 'option_d']
+        fields = ['id', 'question_no', 'title', 'option_a', 'option_b', 'option_c', 'option_d']
 
 class ActiveSubjectViewSerializer(serializers.ModelSerializer):
     id = serializers.IntegerField()
@@ -44,7 +24,13 @@ class ActiveExamViewSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Exam
-        fields = ['id', 'name', 'description', 'start_on', 'subjects']
+        fields = ['id', 'name', 'description', 'start_on', 'subjects', 'is_open', 'is_completed']
+
+class ActiveExamsViewSerializer(serializers.ModelSerializer):
+    id = serializers.IntegerField()
+    class Meta:
+        model = Exam
+        fields = ['id', 'name', 'description', 'start_on', 'is_open', 'is_completed']
 
 ###########################################################################
 class CompletedQuestionViewSerializer(serializers.ModelSerializer):
@@ -53,7 +39,7 @@ class CompletedQuestionViewSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Question
-        fields = ['id', 'title', 'option_a', 'option_b', 'option_c', 'option_d', 'correct_answer', 'answer']
+        fields = ['id', 'question_no', 'title', 'option_a', 'option_b', 'option_c', 'option_d', 'correct_answer', 'answer']
 
 class CompletedSubjectViewSerializer(serializers.ModelSerializer):
     id = serializers.IntegerField()
