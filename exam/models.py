@@ -9,6 +9,7 @@ class Exam(models.Model):
     description = models.TextField(blank=True)
     created_on = models.DateTimeField(default=timezone.now)
     start_on = models.DateTimeField()
+    end_on = models.DateTimeField(null=True, blank=True)
     is_open = models.BooleanField(default=False)
     is_completed = models.BooleanField(default=False)
 
