@@ -1,3 +1,4 @@
+from tkinter.tix import Tree
 from django.db import models
 from users.models import User
 from django.utils import timezone
@@ -29,7 +30,8 @@ class Question(models.Model):
     option_b = models.CharField(max_length=100)
     option_c = models.CharField(max_length=100)
     option_d = models.CharField(max_length=100)
-    correct_answer = models.CharField(max_length=2, choices=[('A', 'A'), ('B', 'B'), ('C', 'C'), ('D', 'D')])
+    option_e = models.CharField(max_length=100)
+    correct_answer = models.CharField(max_length=2, choices=[('A', 'A'), ('B', 'B'), ('C', 'C'), ('D', 'D'), ('E', 'E')])
     exam = models.ForeignKey(Exam, related_name="questions", on_delete=models.CASCADE)
     subject = models.ForeignKey(Subject, related_name="questions", on_delete=models.CASCADE) 
 
@@ -50,7 +52,7 @@ class ExamSubmission(models.Model):
 class QuestionAnswer(models.Model):
     exam = models.ForeignKey(ExamSubmission, related_name="questionanswers", on_delete=models.CASCADE)
     question = models.ForeignKey(Question, related_name="submissions", on_delete=models.CASCADE)
-    answer = models.CharField(max_length=2, choices=[('A', 'A'), ('B', 'B'), ('C', 'C'), ('D', 'D')], blank=True)
+    answer = models.CharField(max_length=2, choices=[('A', 'A'), ('B', 'B'), ('C', 'C'), ('D', 'D'), ('E', 'E')], blank=True)
 
     def __str__(self):
         return f"{self.question} - {self.answer}"

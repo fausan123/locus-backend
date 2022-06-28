@@ -8,7 +8,7 @@ class ActiveQuestionViewSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Question
-        fields = ['id', 'question_no', 'title', 'option_a', 'option_b', 'option_c', 'option_d']
+        fields = ['id', 'question_no', 'title', 'option_a', 'option_b', 'option_c', 'option_d', 'option_e']
 
 class ActiveSubjectViewSerializer(serializers.ModelSerializer):
     id = serializers.IntegerField()
@@ -35,11 +35,11 @@ class ActiveExamsViewSerializer(serializers.ModelSerializer):
 ###########################################################################
 class CompletedQuestionViewSerializer(serializers.ModelSerializer):
     id = serializers.IntegerField()
-    answer = serializers.ChoiceField(choices=[('A', 'A'), ('B', 'B'), ('C', 'C'), ('D', 'D')], allow_blank=True)
+    answer = serializers.ChoiceField(choices=[('A', 'A'), ('B', 'B'), ('C', 'C'), ('D', 'D'), ('E', 'E')], allow_blank=True)
 
     class Meta:
         model = Question
-        fields = ['id', 'question_no', 'title', 'option_a', 'option_b', 'option_c', 'option_d', 'correct_answer', 'answer']
+        fields = ['id', 'question_no', 'title', 'option_a', 'option_b', 'option_c', 'option_d', 'option_e', 'correct_answer', 'answer']
 
 class CompletedSubjectViewSerializer(serializers.ModelSerializer):
     id = serializers.IntegerField()
@@ -64,7 +64,7 @@ class CompletedExamViewSerializer(serializers.ModelSerializer):
 
 class SubmitExamSerializer(serializers.Serializer):
     id = serializers.IntegerField()
-    answer = serializers.ChoiceField(choices=[('A', 'A'), ('B', 'B'), ('C', 'C'), ('D', 'D')], allow_blank=True)
+    answer = serializers.ChoiceField(choices=[('A', 'A'), ('B', 'B'), ('C', 'C'), ('D', 'D'), ('E', 'E')], allow_blank=True)
 
 
 
