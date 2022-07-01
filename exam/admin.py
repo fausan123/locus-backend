@@ -36,7 +36,7 @@ class SubjectAdmin(admin.ModelAdmin):
 
 @admin.register(Question)
 class QuestionAdmin(admin.ModelAdmin):
-    list_display = ("title", "option_a", "option_b", "option_c", "option_d", "option_e", "correct_answer", "subject", "exam")
+    list_display = ("question_no", "title", "option_a", "option_b", "option_c", "option_d", "option_e", "correct_answer", "subject", "exam")
     list_filter = ("exam", "subject", )
 
     search_fields = ("title__startswith", )
