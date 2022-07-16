@@ -1,5 +1,5 @@
 # locus-backend
-LOCUS
+LOCUS: A Timed MCQ based exam submission web app
 
 ## Setup:
 
