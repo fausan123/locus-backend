@@ -1,6 +1,8 @@
 # locus-backend
 LOCUS: A Timed MCQ based exam submission web app
 
+Frontend Repo: [locus-frontend](https://github.com/fausan123/locus-frontend)
+
 ## Setup:
 
 Create a virtual environment
